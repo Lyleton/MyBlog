@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>深入理解 React 18 并发特性 - TechBlog</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="page-wrapper">
+    <!-- 左侧边栏 -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-avatar">L</div>
+        <h1 class="sidebar-name">Lyleton</h1>
+        <p class="sidebar-bio">Full-stack Developer</p>
+      </div>
+
+      <!-- 社交链接 -->
+      <div class="sidebar-social">
+        <a href="#" class="social-link" title="GitHub">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+          </svg>
+        </a>
+        <a href="#" class="social-link" title="Email">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+            <polyline points="22,6 12,13 2,6"></polyline>
+          </svg>
+        </a>
+        <a href="#" class="social-link" title="RSS">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 11a9 9 0 0 1 9 9"></path>
+            <path d="M4 4a16 16 0 0 1 16 16"></path>
+            <circle cx="5" cy="19" r="1"></circle>
+          </svg>
+        </a>
+      </div>
+
+      <!-- 导航菜单 -->
+      <nav>
+        <ul class="sidebar-nav">
+          <li>
+            <a href="index.html">
+              <span class="nav-cmd">cd</span>
+              <span class="nav-arg">~/home</span>
+            </a>
+          </li>
+          <li>
+            <a href="articles.html">
+              <span class="nav-cmd">ls</span>
+              <span class="nav-arg">./articles</span>
+            </a>
+          </li>
+          <li>
+            <a href="#">
+              <span class="nav-cmd">cat</span>
+              <span class="nav-arg">archives.md</span>
+            </a>
+          </li>
+          <li>
+            <a href="about.html">
+              <span class="nav-cmd">cat</span>
+              <span class="nav-arg">about.md</span>
+            </a>
+          </li>
+        </ul>
+      </nav>
+
+      <!-- 目录导航 - 终端风格 -->
+      <div class="toc-widget">
+        <div class="toc-header">
+          <div class="terminal-buttons">
+            <span class="terminal-btn red"></span>
+            <span class="terminal-btn yellow"></span>
+            <span class="terminal-btn green"></span>
+          </div>
+          <span class="toc-title">table_of_contents.md</span>
+        </div>
+        <ul class="toc-list">
+          <li><a href="#concurrent-rendering" class="active">什么是并发渲染</a></li>
+          <li><a href="#new-features">核心新特性</a></li>
+          <li class="toc-h3"><a href="#use-transition">useTransition</a></li>
+          <li class="toc-h3"><a href="#suspense">Suspense 改进</a></li>
+          <li class="toc-h3"><a href="#automatic-batching">自动批处理</a></li>
+          <li><a href="#migration">迁移指南</a></li>
+          <li><a href="#best-practices">最佳实践</a></li>
+          <li><a href="#conclusion">总结</a></li>
+        </ul>
+      </div>
+    </aside>
+
+    <!-- 主内容区域 -->
+    <main class="main-content">
+      <!-- 文章头部 - 终端窗口风格 -->
+      <article class="terminal-window">
+        <div class="terminal-header">
+          <div class="terminal-buttons">
+            <span class="terminal-btn red"></span>
+            <span class="terminal-btn yellow"></span>
+            <span class="terminal-btn green"></span>
+          </div>
+          <span class="terminal-title">react-concurrent.md</span>
+          <span class="terminal-status">reading</span>
+        </div>
+
+        <div class="article-detail-header">
+          <div class="article-tags">
+            <span class="article-tag">React</span>
+            <span class="article-tag">Frontend</span>
+          </div>
+          <h1 class="article-detail-title">深入理解 React 18 并发特性：从原理到实践</h1>
+          <div class="article-detail-meta">
+            <span class="meta-item">
+              <span class="meta-key">date:</span>
+              <span class="meta-value">2024-01-18</span>
+            </span>
+            <span class="meta-item">
+              <span class="meta-key">read:</span>
+              <span class="meta-value">8 min</span>
+            </span>
+            <span class="meta-item">
+              <span class="meta-key">views:</span>
+              <span class="meta-value">3,256</span>
+            </span>
+          </div>
+        </div>
+
+        <!-- 文章主体 -->
+        <div class="article-body">
+          <p>
+            React 18 是 React 发展历程中的一个重要里程碑，它引入了<strong>并发渲染（Concurrent Rendering）</strong>的概念，
+            从根本上改变了 React 应用的渲染方式。本文将深入探讨这些新特性的实现原理和最佳实践。
+          </p>
+
+          <h2 id="concurrent-rendering">什么是并发渲染</h2>
+          <p>
+            在传统的同步渲染模式中，一旦 React 开始渲染，就必须完成整个渲染过程，期间不能被打断。
+            这可能导致长时间的渲染阻塞主线程，影响用户交互的响应性。
+          </p>
+          <p>
+            并发渲染允许 React 在渲染过程中<em>暂停、恢复或放弃</em>正在进行的工作。
+            这意味着 React 可以在后台准备新的 UI，同时保持当前界面的响应性。
+          </p>
+
+          <blockquote>
+            并发模式不是一个功能，而是一个新的底层机制，使 React 能够同时准备多个版本的 UI。
+            — React 官方文档
+          </blockquote>
+
+          <h2 id="new-features">核心新特性</h2>
+
+          <h3 id="use-transition">useTransition</h3>
+          <p>
+            <code>useTransition</code> 是一个允许你将状态更新标记为"过渡"的 Hook。
+            过渡更新可以被更紧急的更新（如用户输入）打断。
+          </p>
+
+          <div class="code-block">
+            <div class="code-header">
+              <div class="code-header-left">
+                <div class="code-dots">
+                  <span class="code-dot red"></span>
+                  <span class="code-dot yellow"></span>
+                  <span class="code-dot green"></span>
+                </div>
+                <span class="code-lang">useTransition.tsx</span>
+              </div>
+              <button class="code-copy">$ cp</button>
+            </div>
+            <pre><code><span class="code-keyword">import</span> { useState, useTransition } <span class="code-keyword">from</span> <span class="code-string">'react'</span>;
+
+<span class="code-keyword">function</span> <span class="code-function">SearchResults</span>() {
+  <span class="code-keyword">const</span> [query, setQuery] = useState(<span class="code-string">''</span>);
+  <span class="code-keyword">const</span> [results, setResults] = useState([]);
+  <span class="code-keyword">const</span> [isPending, startTransition] = useTransition();
+
+  <span class="code-keyword">function</span> <span class="code-function">handleChange</span>(e) {
+    <span class="code-comment">// 紧急更新：显示输入内容</span>
+    setQuery(e.target.value);
+
+    <span class="code-comment">// 过渡更新：更新搜索结果</span>
+    startTransition(() => {
+      setResults(searchData(e.target.value));
+    });
+  }
+
+  <span class="code-keyword">return</span> (
+    &lt;div&gt;
+      &lt;input value={query} onChange={handleChange} /&gt;
+      {isPending ? &lt;Spinner /&gt; : &lt;ResultsList data={results} /&gt;}
+    &lt;/div&gt;
+  );
+}</code></pre>
+          </div>
+
+          <h3 id="suspense">Suspense 改进</h3>
+          <p>
+            React 18 对 Suspense 进行了重大升级，现在支持在服务端渲染中使用。
+            配合新的 Streaming SSR 功能，可以实现更快的首屏加载。
+          </p>
+
+          <div class="code-block">
+            <div class="code-header">
+              <div class="code-header-left">
+                <div class="code-dots">
+                  <span class="code-dot red"></span>
+                  <span class="code-dot yellow"></span>
+                  <span class="code-dot green"></span>
+                </div>
+                <span class="code-lang">Suspense.tsx</span>
+              </div>
+              <button class="code-copy">$ cp</button>
+            </div>
+            <pre><code><span class="code-keyword">import</span> { Suspense, lazy } <span class="code-keyword">from</span> <span class="code-string">'react'</span>;
+
+<span class="code-keyword">const</span> <span class="code-class">Comments</span> = lazy(() => <span class="code-keyword">import</span>(<span class="code-string">'./Comments'</span>));
+
+<span class="code-keyword">function</span> <span class="code-function">ArticlePage</span>({ article }) {
+  <span class="code-keyword">return</span> (
+    &lt;article&gt;
+      &lt;h1&gt;{article.title}&lt;/h1&gt;
+      &lt;p&gt;{article.content}&lt;/p&gt;
+
+      <span class="code-comment">{/* 评论区可以延迟加载 */}</span>
+      &lt;Suspense fallback={&lt;CommentsSkeleton /&gt;}&gt;
+        &lt;Comments articleId={article.id} /&gt;
+      &lt;/Suspense&gt;
+    &lt;/article&gt;
+  );
+}</code></pre>
+          </div>
+
+          <h3 id="automatic-batching">自动批处理</h3>
+          <p>
+            React 18 引入了自动批处理（Automatic Batching），将多个状态更新合并为一次重新渲染，
+            即使这些更新发生在 Promise、setTimeout 或原生事件处理器中。
+          </p>
+
+          <div class="code-block">
+            <div class="code-header">
+              <div class="code-header-left">
+                <div class="code-dots">
+                  <span class="code-dot red"></span>
+                  <span class="code-dot yellow"></span>
+                  <span class="code-dot green"></span>
+                </div>
+                <span class="code-lang">batching.tsx</span>
+              </div>
+              <button class="code-copy">$ cp</button>
+            </div>
+            <pre><code><span class="code-comment">// React 18 之前：两次渲染</span>
+<span class="code-comment">// React 18 之后：一次渲染（自动批处理）</span>
+setTimeout(() => {
+  setCount(c => c + <span class="code-number">1</span>);
+  setFlag(f => !f);
+  <span class="code-comment">// React 18 会将这两个更新批量处理</span>
+}, <span class="code-number">1000</span>);</code></pre>
+          </div>
+
+          <h2 id="migration">迁移指南</h2>
+          <p>
+            升级到 React 18 的过程相对平滑。首先需要更新依赖并使用新的 Root API：
+          </p>
+
+          <div class="code-block">
+            <div class="code-header">
+              <div class="code-header-left">
+                <div class="code-dots">
+                  <span class="code-dot red"></span>
+                  <span class="code-dot yellow"></span>
+                  <span class="code-dot green"></span>
+                </div>
+                <span class="code-lang">index.tsx</span>
+              </div>
+              <button class="code-copy">$ cp</button>
+            </div>
+            <pre><code><span class="code-comment">// 旧方式</span>
+<span class="code-keyword">import</span> ReactDOM <span class="code-keyword">from</span> <span class="code-string">'react-dom'</span>;
+ReactDOM.render(&lt;App /&gt;, document.getElementById(<span class="code-string">'root'</span>));
+
+<span class="code-comment">// 新方式</span>
+<span class="code-keyword">import</span> { createRoot } <span class="code-keyword">from</span> <span class="code-string">'react-dom/client'</span>;
+<span class="code-keyword">const</span> root = createRoot(document.getElementById(<span class="code-string">'root'</span>));
+root.render(&lt;App /&gt;);</code></pre>
+          </div>
+
+          <h2 id="best-practices">最佳实践</h2>
+          <ul>
+            <li><strong>优先使用 Concurrent 特性</strong>：在适当的场景使用 <code>useTransition</code> 和 <code>useDeferredValue</code></li>
+            <li><strong>合理使用 Suspense</strong>：将慢速组件包装在 Suspense 边界中</li>
+            <li><strong>避免阻塞主线程</strong>：长时间运行的计算应该拆分或移到 Web Worker</li>
+            <li><strong>测试并发行为</strong>：使用 React Testing Library 的并发模式测试工具</li>
+          </ul>
+
+          <h2 id="conclusion">总结</h2>
+          <p>
+            React 18 的并发特性代表了 React 渲染模型的重大进化。通过理解和正确使用这些新特性，
+            我们可以构建更加流畅、响应更快的用户界面。建议在新项目中积极采用这些特性，
+            并逐步将现有项目迁移到新的并发模式。
+          </p>
+
+          <!-- 文章标签 -->
+          <div class="article-footer-tags">
+            <span class="tags-label">$ echo $TAGS</span>
+            <div class="tags-list">
+              <a href="#" class="article-tag">React</a>
+              <a href="#" class="article-tag">React18</a>
+              <a href="#" class="article-tag">Concurrent</a>
+              <a href="#" class="article-tag">Frontend</a>
+            </div>
+          </div>
+
+          <!-- 上一篇/下一篇 -->
+          <div class="article-nav">
+            <a href="#" class="article-nav-item prev">
+              <div class="nav-direction">
+                <span class="nav-cmd">cd</span>
+                <span>../prev</span>
+              </div>
+              <span class="nav-title">TypeScript 5.0 新特性全面解析</span>
+            </a>
+            <a href="#" class="article-nav-item next">
+              <div class="nav-direction">
+                <span class="nav-cmd">cd</span>
+                <span>../next</span>
+              </div>
+              <span class="nav-title">Node.js 微服务架构指南</span>
+            </a>
+          </div>
+
+          <!-- 相关文章 -->
+          <section class="related-articles">
+            <h3 class="related-title">$ ls ./related/</h3>
+            <div class="related-grid">
+              <a href="#" class="related-item">
+                <div class="related-icon">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+                  </svg>
+                </div>
+                <div class="related-content">
+                  <div class="related-name">react-hooks-guide.md</div>
+                  <div class="related-meta">10 min read</div>
+                </div>
+              </a>
+              <a href="#" class="related-item">
+                <div class="related-icon">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+                  </svg>
+                </div>
+                <div class="related-content">
+                  <div class="related-name">react-performance.md</div>
+                  <div class="related-meta">12 min read</div>
+                </div>
+              </a>
+            </div>
+          </section>
+        </div>
+      </article>
+
+      <!-- 页脚 -->
+      <footer class="footer">
+        <div class="footer-terminal">
+          <div class="footer-line">
+            <span class="footer-prompt">$</span>
+            <span class="footer-cmd">whoami</span>
+          </div>
+          <div class="footer-output">Lyleton's TechBlog - 专注于前端开发、后端架构和 DevOps 实践</div>
+
+          <div class="footer-line" style="margin-top: var(--spacing-md);">
+            <span class="footer-prompt">$</span>
+            <span class="footer-cmd">ls</span>
+            <span>./links/</span>
+          </div>
+          <div class="footer-links">
+            <a href="#" class="footer-link">GitHub</a>
+            <a href="#" class="footer-link">Twitter</a>
+            <a href="#" class="footer-link">Email</a>
+            <a href="#" class="footer-link">RSS</a>
+          </div>
+
+          <div class="footer-copyright">
+            // Copyright &copy; 2024 TechBlog. Powered by Modern Web Technologies.
+          </div>
+        </div>
+      </footer>
+    </main>
+  </div>
+</body>
+</html>

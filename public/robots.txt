@@ -1,0 +1,16 @@
+# robots.txt for TechBlog
+User-agent: *
+Allow: /
+
+# Sitemaps
+Sitemap: https://your-domain.com/sitemap.xml
+
+# Disallow admin and API routes
+Disallow: /api/
+Disallow: /_nuxt/
+Disallow: /_content/
+
+# Allow search engines to crawl everything else
+Allow: /articles/
+Allow: /about
+Allow: /archives
