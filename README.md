@@ -67,7 +67,7 @@ myblog/
 ├── content/
 │   ├── about.md         # 关于页面
 │   └── articles/        # 博客文章 (Markdown)
-├── deploy/              # Docker 部署配置
+├── deploy/              # Caddy 服务器部署配置
 ├── layouts/             # 页面布局
 ├── pages/               # 页面路由
 ├── public/              # 静态资源
@@ -182,44 +182,49 @@ NUXT_PUBLIC_GISCUS_CATEGORY_ID=your-category-id
 
 项目已包含 `vercel.json` 配置，直接导入到 Vercel 即可。
 
-### Docker 部署
+### Caddy + GitHub Actions (推荐)
 
-#### 1. 构建并推送镜像
+项目集成了 CI/CD 流程，推送代码后自动部署：
 
-```bash
-# 构建镜像
-docker build -t lyleton/myblog:latest .
-
-# 推送到 Docker Hub
-docker login
-docker push lyleton/myblog:latest
+```
+Git Push → CI 检查 → 静态构建 → Rsync 同步 → Caddy 服务
 ```
 
-#### 2. 服务器部署
+#### 配置步骤
 
-将 `deploy/` 目录上传到服务器：
+**1. 配置 GitHub Secrets**
+
+在仓库 Settings → Secrets 中添加：
+
+| Secret | 说明 |
+|--------|------|
+| `SERVER_HOST` | 服务器 IP 或域名 |
+| `SERVER_USER` | SSH 用户名 |
+| `SERVER_SSH_KEY` | SSH 私钥 |
+| `SITE_URL` | 网站完整 URL |
+
+**2. 服务器首次配置**
 
 ```bash
-scp -r deploy/ user@your-server:/opt/myblog/
+# 安装 Caddy
+sudo apt install caddy  # Debian/Ubuntu
+
+# 创建网站目录
+sudo mkdir -p /var/www/myblog
+sudo chown deploy:deploy /var/www/myblog
+
+# 配置 Caddy (修改域名)
+sudo cp deploy/Caddyfile /etc/caddy/Caddyfile
+sudo vim /etc/caddy/Caddyfile
+sudo systemctl reload caddy
 ```
 
-在服务器上配置并启动：
+**3. 日常发布**
 
 ```bash
-cd /opt/myblog
-
-# 配置环境变量
-cp .env.example .env
-vim .env
-
-# 配置 SSL 证书
-mkdir ssl
-cp /path/to/fullchain.pem ssl/
-cp /path/to/privkey.pem ssl/
-
-# 启动服务
-docker compose pull
-docker compose up -d
+git add content/articles/new-post.md
+git commit -m "feat: 新文章"
+git push  # 自动部署 ✨
 ```
 
 详细说明参见 [deploy/README.md](deploy/README.md)

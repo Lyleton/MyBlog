@@ -1,7 +1,7 @@
 ---
 title: 'Hello World - 欢迎来到我的技术博客'
 description: '这是我的第一篇博客文章，介绍博客的技术栈、功能特性和图片使用示例。'
-date: '2024-01-20'
+date: '2025-12-15'
 category: 'Vue'
 tags: ['Nuxt', 'Vue', '博客', '教程']
 cover: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=1200&h=630&fit=crop'

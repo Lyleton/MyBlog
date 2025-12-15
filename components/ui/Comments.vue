@@ -18,11 +18,10 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  // 默认配置 - 请替换为你自己的配置
-  repo: 'example/example-repo' as `${string}/${string}`,
-  repoId: 'your-repo-id',
+  repo: 'Lyleton/MyBlog' as `${string}/${string}`,
+  repoId: 'R_kgDOQo33bw',
   category: 'Announcements',
-  categoryId: 'your-category-id',
+  categoryId: 'DIC_kwDOQo33b84Czzu-',
 })
 
 // 根据主题切换 Giscus 主题

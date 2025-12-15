@@ -1,7 +1,7 @@
 ---
 title: 'TypeScript 实用技巧与最佳实践'
 description: '分享日常开发中常用的 TypeScript 技巧，提升代码质量和开发效率。'
-date: '2024-01-15'
+date: '2025-12-15'
 category: 'TypeScript'
 tags: ['TypeScript', '最佳实践', '类型系统']
 featured: false
