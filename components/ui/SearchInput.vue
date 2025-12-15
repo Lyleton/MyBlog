@@ -10,14 +10,20 @@ const emit = defineEmits<{
 const handleClick = () => {
   emit('click')
 }
+
+// Detect OS for shortcut display
+const isMac = ref(false)
+onMounted(() => {
+  isMac.value = navigator.platform.toUpperCase().includes('MAC')
+})
 </script>
 
 <template>
   <button class="search-input" @click="handleClick">
     <span class="search-prompt">$</span>
-    <span class="search-cmd">grep -r</span>
+    <span class="search-cmd">grep -ri</span>
     <span class="search-placeholder">'search...'</span>
-    <span class="search-shortcut">/</span>
+    <span class="search-shortcut">{{ isMac ? '⌘K' : 'Ctrl+K' }}</span>
   </button>
 </template>
 

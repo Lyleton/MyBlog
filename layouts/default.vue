@@ -6,10 +6,14 @@ const {
   isLoading,
   isOpen,
   selectedIndex,
+  searchHistory,
   open: openSearch,
   close: closeSearch,
   navigateUp,
   navigateDown,
+  clearHistory,
+  removeFromHistory,
+  useHistoryItem,
 } = useSearch()
 </script>
 
@@ -40,10 +44,14 @@ const {
       :results="results"
       :is-loading="isLoading"
       :selected-index="selectedIndex"
+      :search-history="searchHistory"
       @update:query="query = $event"
       @close="closeSearch"
       @navigate-up="navigateUp"
       @navigate-down="navigateDown"
+      @use-history="useHistoryItem"
+      @clear-history="clearHistory"
+      @remove-history="removeFromHistory"
     />
   </div>
 </template>
