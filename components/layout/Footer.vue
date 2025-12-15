@@ -36,6 +36,12 @@ const currentYear = new Date().getFullYear()
       <div class="footer-copyright">
         // Copyright &copy; {{ currentYear }} {{ siteConfig.name }}. Powered by Nuxt 3.
       </div>
+
+      <div class="footer-icp">
+        <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer">
+          湘ICP备2025103214号-1
+        </a>
+      </div>
     </div>
   </footer>
 </template>
@@ -96,5 +102,19 @@ const currentYear = new Date().getFullYear()
 .footer-copyright {
   color: var(--text-muted);
   font-size: 0.8125rem;
+}
+
+.footer-icp {
+  margin-top: 12px;
+  font-size: 0.75rem;
+}
+
+.footer-icp a {
+  color: var(--text-muted);
+  transition: color 0.2s ease;
+}
+
+.footer-icp a:hover {
+  color: var(--primary);
 }
 </style>
