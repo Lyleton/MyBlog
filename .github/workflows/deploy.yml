@@ -45,12 +45,17 @@ jobs:
 
       - name: Deploy to server
         run: |
-          # 清空远程目录并上传新文件
+          # 打包压缩（速度提升 10x+）
+          cd .output/public && tar -czf ../../deploy.tar.gz . && cd ../..
+
+          # 上传压缩包
+          scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            deploy.tar.gz ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/tmp/
+
+          # 远程解压并部署
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
             ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
-            "rm -rf /var/www/myblog/* && mkdir -p /var/www/myblog"
-          scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no -r \
-            .output/public/* ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/var/www/myblog/
+            "rm -rf /var/www/myblog/* && tar -xzf /tmp/deploy.tar.gz -C /var/www/myblog && rm /tmp/deploy.tar.gz"
 
       - name: Deployment notification
         run: |
