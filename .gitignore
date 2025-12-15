@@ -42,3 +42,7 @@ coverage
 
 # Playwright MCP
 .playwright-mcp/
+
+# Deploy secrets
+deploy/ssl/
+deploy/.env

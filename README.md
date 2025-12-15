@@ -67,6 +67,7 @@ myblog/
 ├── content/
 │   ├── about.md         # 关于页面
 │   └── articles/        # 博客文章 (Markdown)
+├── deploy/              # Docker 部署配置
 ├── layouts/             # 页面布局
 ├── pages/               # 页面路由
 ├── public/              # 静态资源
@@ -181,7 +182,49 @@ NUXT_PUBLIC_GISCUS_CATEGORY_ID=your-category-id
 
 项目已包含 `vercel.json` 配置，直接导入到 Vercel 即可。
 
-### 其他平台
+### Docker 部署
+
+#### 1. 构建并推送镜像
+
+```bash
+# 构建镜像
+docker build -t lyleton/myblog:latest .
+
+# 推送到 Docker Hub
+docker login
+docker push lyleton/myblog:latest
+```
+
+#### 2. 服务器部署
+
+将 `deploy/` 目录上传到服务器：
+
+```bash
+scp -r deploy/ user@your-server:/opt/myblog/
+```
+
+在服务器上配置并启动：
+
+```bash
+cd /opt/myblog
+
+# 配置环境变量
+cp .env.example .env
+vim .env
+
+# 配置 SSL 证书
+mkdir ssl
+cp /path/to/fullchain.pem ssl/
+cp /path/to/privkey.pem ssl/
+
+# 启动服务
+docker compose pull
+docker compose up -d
+```
+
+详细说明参见 [deploy/README.md](deploy/README.md)
+
+### 静态部署
 
 ```bash
 npm run generate  # 生成静态文件
