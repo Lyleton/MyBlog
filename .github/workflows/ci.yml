@@ -37,7 +37,10 @@ jobs:
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
+        if: success()
+        continue-on-error: true
         with:
           name: build-output
           path: .output/
           retention-days: 1
+          if-no-files-found: ignore
