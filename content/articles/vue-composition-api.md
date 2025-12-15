@@ -1,7 +1,7 @@
 ---
 title: 'Vue 3 Composition API 完全指南'
 description: '深入理解 Vue 3 Composition API 的核心概念、使用场景和最佳实践。'
-date: '2024-01-18'
+date: '2025-12-15'
 category: 'Vue'
 tags: ['Vue', 'Composition API', 'TypeScript']
 featured: false

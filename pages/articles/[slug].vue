@@ -88,6 +88,9 @@ useHead({
         <ContentRenderer v-if="article" :value="article" />
       </div>
 
+      <!-- 评论区 -->
+      <Comments />
+
       <!-- 文章底部 -->
       <footer class="article-footer">
         <!-- 上一篇/下一篇 -->

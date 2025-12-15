@@ -10,7 +10,7 @@ export const siteConfig: SiteConfig = {
     bio: 'Per aspera ad astra',
     avatar: '/images/avatar.png',
   },
-  url: 'https://techblog.dev',
+  url: 'https://lyleton.fun',
   social: [
     {
       name: 'GitHub',
