@@ -45,8 +45,12 @@ jobs:
 
       - name: Deploy to server
         run: |
-          rsync -avz --delete -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
-            .output/public/ ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/var/www/myblog
+          # 清空远程目录并上传新文件
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
+            "rm -rf /var/www/myblog/* && mkdir -p /var/www/myblog"
+          scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no -r \
+            .output/public/* ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/var/www/myblog/
 
       - name: Deployment notification
         run: |
