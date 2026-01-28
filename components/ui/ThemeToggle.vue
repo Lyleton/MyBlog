@@ -1,5 +1,6 @@
 <script setup lang="ts">
 const colorMode = useColorMode()
+const { isCollapsed } = useSidebar()
 
 const toggleTheme = () => {
   colorMode.preference = colorMode.value === 'dark' ? 'light' : 'dark'
@@ -9,12 +10,21 @@ const toggleTheme = () => {
 <template>
   <button
     class="theme-toggle"
+    :class="{ collapsed: isCollapsed }"
     :title="colorMode.value === 'dark' ? '切换到亮色模式' : '切换到暗色模式'"
     @click="toggleTheme"
   >
-    <span class="theme-cmd">$</span>
-    <span class="theme-text">theme</span>
-    <span class="theme-flag">{{ colorMode.value === 'dark' ? '--light' : '--dark' }}</span>
+    <Icon
+      v-if="isCollapsed"
+      :name="colorMode.value === 'dark' ? 'ph:sun' : 'ph:moon'"
+      size="20"
+      class="theme-icon"
+    />
+    <template v-else>
+      <span class="theme-cmd">$</span>
+      <span class="theme-text">theme</span>
+      <span class="theme-flag">{{ colorMode.value === 'dark' ? '--light' : '--dark' }}</span>
+    </template>
   </button>
 </template>
 
@@ -38,6 +48,12 @@ const toggleTheme = () => {
   border-color: var(--primary);
 }
 
+.theme-toggle.collapsed {
+  width: 100%;
+  justify-content: center;
+  padding: 10px 8px;
+}
+
 .theme-cmd {
   color: var(--text-muted);
 }
@@ -48,5 +64,13 @@ const toggleTheme = () => {
 
 .theme-flag {
   color: var(--syntax-string);
+}
+
+.theme-icon {
+  color: var(--text-secondary);
+}
+
+.theme-toggle:hover .theme-icon {
+  color: var(--primary);
 }
 </style>

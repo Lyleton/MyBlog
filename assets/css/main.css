@@ -38,6 +38,7 @@
 
   /* 布局 */
   --sidebar-width: 280px;
+  --sidebar-collapsed-width: 72px;
 }
 
 .dark {
