@@ -4,6 +4,7 @@ import { navigation } from '~/config/navigation'
 
 const route = useRoute()
 const { isOpen, close } = useMobileMenu()
+const { isCollapsed, toggle: toggleSidebar } = useSidebar()
 
 const emit = defineEmits<{
   'open-search': []
@@ -38,7 +39,7 @@ const handleSearchClick = () => {
   </Transition>
 
   <!-- Sidebar -->
-  <aside class="sidebar" :class="{ open: isOpen }">
+  <aside class="sidebar" :class="{ open: isOpen, collapsed: isCollapsed }">
     <div class="sidebar-header">
       <div class="sidebar-avatar">
         <img
@@ -49,8 +50,10 @@ const handleSearchClick = () => {
         >
         <span v-else class="avatar-letter">{{ siteConfig.author.name.charAt(0) }}</span>
       </div>
-      <h1 class="sidebar-name">{{ siteConfig.author.name }}</h1>
-      <p class="sidebar-bio">{{ siteConfig.author.bio }}</p>
+      <template v-if="!isCollapsed">
+        <h1 class="sidebar-name">{{ siteConfig.author.name }}</h1>
+        <p class="sidebar-bio">{{ siteConfig.author.bio }}</p>
+      </template>
     </div>
 
     <!-- 社交链接 -->
@@ -72,9 +75,12 @@ const handleSearchClick = () => {
     <nav class="sidebar-nav">
       <ul>
         <li v-for="item in navigation" :key="item.path">
-          <NuxtLink :to="item.path" :class="{ active: isActive(item.path) }">
-            <span class="nav-cmd">{{ item.cmd }}</span>
-            <span class="nav-arg">{{ item.arg }}</span>
+          <NuxtLink :to="item.path" :class="{ active: isActive(item.path) }" :title="isCollapsed ? item.label : undefined">
+            <Icon v-if="isCollapsed && item.icon" :name="item.icon" size="20" class="nav-icon" />
+            <template v-else>
+              <span class="nav-cmd">{{ item.cmd }}</span>
+              <span class="nav-arg">{{ item.arg }}</span>
+            </template>
           </NuxtLink>
         </li>
       </ul>
@@ -82,11 +88,14 @@ const handleSearchClick = () => {
 
     <!-- 搜索入口 -->
     <div class="sidebar-search">
-      <button class="search-terminal" @click="handleSearchClick">
-        <span class="search-prompt">$</span>
-        <span class="search-text">grep -r</span>
-        <span class="search-placeholder">'search...'</span>
-        <span class="search-shortcut">/</span>
+      <button class="search-terminal" :title="isCollapsed ? '搜索' : undefined" @click="handleSearchClick">
+        <Icon v-if="isCollapsed" name="ph:magnifying-glass" size="20" class="search-icon" />
+        <template v-else>
+          <span class="search-prompt">$</span>
+          <span class="search-text">grep -r</span>
+          <span class="search-placeholder">'search...'</span>
+          <span class="search-shortcut">/</span>
+        </template>
       </button>
     </div>
 
@@ -94,6 +103,15 @@ const handleSearchClick = () => {
     <div class="sidebar-theme">
       <ThemeToggle />
     </div>
+
+    <!-- 折叠切换按钮 -->
+    <button
+      class="sidebar-toggle"
+      :title="isCollapsed ? '展开侧边栏' : '收起侧边栏'"
+      @click="toggleSidebar"
+    >
+      <Icon :name="isCollapsed ? 'ph:caret-right' : 'ph:caret-left'" size="16" />
+    </button>
 
     <!-- Mobile close button -->
     <button class="sidebar-close" @click="close">
@@ -116,7 +134,68 @@ const handleSearchClick = () => {
   padding: 32px 24px;
   overflow-y: auto;
   z-index: 100;
-  transition: transform 0.3s ease;
+  transition: width 0.3s ease, transform 0.3s ease, padding 0.3s ease;
+}
+
+/* 桌面端折叠状态 */
+@media (min-width: 1025px) {
+  .sidebar.collapsed {
+    width: var(--sidebar-collapsed-width);
+    padding: 24px 12px;
+    align-items: center;
+  }
+
+  .sidebar.collapsed .sidebar-avatar {
+    width: 48px;
+    height: 48px;
+    margin-bottom: 16px;
+  }
+
+  .sidebar.collapsed .avatar-letter {
+    font-size: 1.25rem;
+  }
+
+  .sidebar.collapsed .sidebar-social {
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 24px;
+  }
+
+  .sidebar.collapsed .social-link {
+    width: 40px;
+    height: 40px;
+  }
+
+  .sidebar.collapsed .sidebar-nav a {
+    justify-content: center;
+    padding: 10px 8px;
+  }
+
+  .sidebar.collapsed .nav-icon {
+    color: var(--text-secondary);
+  }
+
+  .sidebar.collapsed .sidebar-nav a.active .nav-icon {
+    color: var(--primary);
+  }
+
+  .sidebar.collapsed .sidebar-search {
+    width: 100%;
+  }
+
+  .sidebar.collapsed .search-terminal {
+    width: 100%;
+    justify-content: center;
+    padding: 10px 8px;
+  }
+
+  .sidebar.collapsed .search-icon {
+    color: var(--text-secondary);
+  }
+
+  .sidebar.collapsed .search-terminal:hover .search-icon {
+    color: var(--primary);
+  }
 }
 
 .sidebar-overlay {
@@ -304,6 +383,32 @@ const handleSearchClick = () => {
 
 .sidebar-theme {
   margin-top: auto;
+  margin-bottom: 12px;
+}
+
+/* 折叠切换按钮 */
+.sidebar-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 36px;
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-tertiary);
+  border-radius: 8px;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sidebar-toggle:hover {
+  background-color: var(--primary-light);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.sidebar.collapsed .sidebar-toggle {
+  width: 40px;
 }
 
 /* Dark mode adjustments */
@@ -325,7 +430,7 @@ const handleSearchClick = () => {
 /* Tablet: Collapsed sidebar (768px - 1024px) */
 @media (max-width: 1024px) and (min-width: 768px) {
   .sidebar {
-    width: 72px;
+    width: var(--sidebar-collapsed-width);
     padding: 24px 12px;
     align-items: center;
   }
@@ -357,14 +462,12 @@ const handleSearchClick = () => {
   }
 
   .sidebar-nav a {
-    flex-direction: column;
-    align-items: center;
-    padding: 8px;
-    gap: 4px;
+    justify-content: center;
+    padding: 10px 8px;
   }
 
   .nav-cmd {
-    font-size: 0.75rem;
+    font-size: 0.8125rem;
   }
 
   .nav-arg {
@@ -372,14 +475,13 @@ const handleSearchClick = () => {
   }
 
   .sidebar-search {
-    display: none;
+    width: 100%;
   }
 
   .search-terminal {
-    width: 40px;
-    height: 40px;
-    padding: 0;
+    width: 100%;
     justify-content: center;
+    padding: 10px 8px;
   }
 
   .search-prompt,
@@ -390,6 +492,11 @@ const handleSearchClick = () => {
 
   .search-shortcut {
     padding: 4px 8px;
+  }
+
+  /* 平板端隐藏折叠按钮（因为已自动收缩） */
+  .sidebar-toggle {
+    display: none;
   }
 }
 
@@ -414,6 +521,18 @@ const handleSearchClick = () => {
 
   .sidebar-header {
     margin-top: 32px;
+  }
+
+  /* 移动端隐藏折叠按钮 */
+  .sidebar-toggle {
+    display: none;
+  }
+
+  /* 移动端始终显示完整内容 */
+  .sidebar.collapsed {
+    width: 280px;
+    padding: 32px 24px;
+    align-items: stretch;
   }
 }
 </style>

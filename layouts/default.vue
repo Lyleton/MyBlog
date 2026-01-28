@@ -1,5 +1,6 @@
 <script setup lang="ts">
 const { toggle } = useMobileMenu()
+const { isCollapsed, sidebarWidth } = useSidebar()
 const {
   query,
   results,
@@ -32,7 +33,7 @@ const {
       </button>
     </header>
 
-    <main class="main-content">
+    <main class="main-content" :class="{ 'sidebar-collapsed': isCollapsed }" :style="{ marginLeft: sidebarWidth }">
       <slot />
       <Footer />
     </main>
@@ -110,12 +111,13 @@ const {
   margin-left: var(--sidebar-width);
   padding: 48px 64px;
   background-color: var(--bg-primary);
+  transition: margin-left 0.3s ease;
 }
 
 /* Tablet layout (768px - 1024px) */
 @media (max-width: 1024px) and (min-width: 768px) {
   .main-content {
-    margin-left: 72px;
+    margin-left: var(--sidebar-collapsed-width) !important;
     padding: 32px 40px;
   }
 }
@@ -127,7 +129,7 @@ const {
   }
 
   .main-content {
-    margin-left: 0;
+    margin-left: 0 !important;
     margin-top: 56px;
     padding: 24px 16px;
   }
