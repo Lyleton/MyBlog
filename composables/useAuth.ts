@@ -2,8 +2,9 @@ export function useAuth() {
   const authed = useState('authed', () => false)
   let checking: Promise<void> | undefined
 
-  function check() {
+  function check(force = false) {
     if (import.meta.server) return Promise.resolve()
+    if (force) checking = undefined
     if (!checking) {
       checking = $fetch('/api/auth/me')
         .then(() => { authed.value = true })

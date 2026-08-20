@@ -9,12 +9,15 @@ if (typeof route.query.pt === 'string' && route.query.pt) {
   navigateTo(`/auth/portable?pt=${encodeURIComponent(route.query.pt)}`, { external: true })
 }
 
+const { check } = useAuth()
+
 async function login() {
   if (!passphrase.value || loading.value) return
   loading.value = true
   error.value = ''
   try {
     await $fetch('/api/auth/login', { method: 'POST', body: { passphrase: passphrase.value } })
+    await check(true)
     navigateTo('/')
   } catch {
     error.value = '验证失败，请稍后再试'

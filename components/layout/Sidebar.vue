@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { siteConfig } from '~/config/site'
 import { navigation } from '~/config/navigation'
+import type { NavItem } from '~/types'
 
 const route = useRoute()
 const { isOpen, close } = useMobileMenu()
 const { isCollapsed, toggle: toggleSidebar } = useSidebar()
 const { authed, logout } = useAuth()
+const { items: adminNav, loaded: navLoaded, load: loadNav, save: saveNav, remove: removeNav } = useNavAdmin()
 
 const emit = defineEmits<{
   'open-search': []
@@ -16,6 +18,38 @@ const isActive = (path: string) => {
     return route.path === '/'
   }
   return route.path.startsWith(path)
+}
+
+const navItems = computed(() => (authed.value && navLoaded.value) ? adminNav.value : navigation)
+
+const draft = ref<NavItem | null>(null)
+const editIndex = ref<number | null>(null)
+
+watch(authed, (v) => { if (v) loadNav() }, { immediate: true })
+
+const canEditNav = computed(() => authed.value && !isCollapsed.value)
+
+function startEdit(idx: number) {
+  editIndex.value = idx
+  draft.value = { ...navItems.value[idx] }
+}
+
+function startAdd() {
+  editIndex.value = null
+  draft.value = { label: '', path: '/', cmd: 'cd', arg: '', icon: '' }
+}
+
+async function saveDraft() {
+  if (!draft.value) return
+  const d = { ...draft.value }
+  d.cmd = d.cmd.trim() || 'cd'
+  d.arg = d.arg.trim() || d.path
+  d.icon = d.icon?.trim() || undefined
+  const next = [...navItems.value]
+  if (editIndex.value === null) next.push(d)
+  else next[editIndex.value] = d
+  await saveNav(next)
+  draft.value = null
 }
 
 // Close menu when clicking overlay
@@ -74,8 +108,19 @@ const handleSearchClick = () => {
 
     <!-- 导航菜单 -->
     <nav class="sidebar-nav">
-      <ul>
-        <li v-for="item in navigation" :key="item.path">
+      <form v-if="draft" class="nav-form" @submit.prevent="saveDraft">
+        <input v-model="draft.label" class="nav-form-input" placeholder="名称 如 首页" required>
+        <input v-model="draft.path" class="nav-form-input" placeholder="路径 / 或 https://" required>
+        <input v-model="draft.cmd" class="nav-form-input" placeholder="命令 如 cd" >
+        <input v-model="draft.arg" class="nav-form-input" placeholder="参数 如 ~/home">
+        <input v-model="draft.icon" class="nav-form-input" placeholder="图标 如 ph:house（可选）">
+        <div class="nav-form-actions">
+          <button type="submit" class="nav-form-save">保存</button>
+          <button type="button" class="nav-form-cancel" @click="draft = null">取消</button>
+        </div>
+      </form>
+      <ul v-else>
+        <li v-for="(item, idx) in navItems" :key="idx">
           <NuxtLink :to="item.path" :class="{ active: isActive(item.path) }" :title="isCollapsed ? item.label : undefined">
             <Icon v-if="isCollapsed && item.icon" :name="item.icon" size="20" class="nav-icon" />
             <template v-else>
@@ -83,6 +128,13 @@ const handleSearchClick = () => {
               <span class="nav-arg">{{ item.arg }}</span>
             </template>
           </NuxtLink>
+          <span v-if="canEditNav" class="nav-actions">
+            <button class="nav-action" title="编辑导航" @click="startEdit(idx)">✎</button>
+            <button class="nav-action danger" title="删除导航" @click="removeNav(idx)">✕</button>
+          </span>
+        </li>
+        <li v-if="canEditNav">
+          <button class="nav-add" @click="startAdd">+ 导航</button>
         </li>
       </ul>
     </nav>
@@ -346,6 +398,112 @@ const handleSearchClick = () => {
 
 .sidebar-nav a.active .nav-arg {
   color: var(--primary-dark);
+}
+
+.sidebar-nav li {
+  position: relative;
+}
+
+.nav-actions {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  gap: 6px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.sidebar-nav li:hover .nav-actions {
+  opacity: 1;
+}
+
+.nav-action {
+  border: none;
+  background: none;
+  padding: 2px 4px;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.nav-action:hover {
+  color: var(--primary);
+}
+
+.nav-action.danger:hover {
+  color: #e06c75;
+}
+
+.nav-add {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px dashed var(--border-color);
+  border-radius: 8px;
+  background: none;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.nav-add:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.nav-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background-color: var(--bg-tertiary);
+}
+
+.nav-form-input {
+  padding: 6px 8px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+}
+
+.nav-form-input:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.nav-form-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.nav-form-save,
+.nav-form-cancel {
+  flex: 1;
+  padding: 6px;
+  border-radius: 4px;
+  border: none;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+
+.nav-form-save {
+  background-color: var(--primary);
+  color: #fff;
+}
+
+.nav-form-cancel {
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
 }
 
 .sidebar-search {

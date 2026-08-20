@@ -99,6 +99,49 @@ export function writeCategories(categories: string[]) {
   scheduleRebuild()
 }
 
+// ---- 侧边栏导航（config/navigation.ts）----
+
+const NAV_CONFIG = join(ROOT, 'config', 'navigation.ts')
+
+export interface NavItemAdmin {
+  label: string
+  path: string
+  cmd: string
+  arg: string
+  icon?: string
+}
+
+export function listNavigation(): NavItemAdmin[] {
+  const src = readFileSync(NAV_CONFIG, 'utf-8')
+  return [...src.matchAll(/\{([\s\S]*?)\}/g)]
+    .map(([, b]) => {
+      const f = (k: string) => b.match(new RegExp(`${k}:\\s*'([^']*)'`))?.[1] ?? ''
+      return { label: f('label'), path: f('path'), cmd: f('cmd'), arg: f('arg'), icon: f('icon') || undefined }
+    })
+    .filter((i) => i.label && i.path)
+}
+
+export function writeNavigation(items: NavItemAdmin[]) {
+  for (const i of items) {
+    for (const v of [i.label, i.path, i.cmd, i.arg]) {
+      if (typeof v !== 'string' || !v.trim() || /['"\\\n]/.test(v)) throw badRequest('非法导航字段')
+    }
+    if (!i.path.startsWith('/') && !/^https?:\/\//.test(i.path)) throw badRequest('path 须以 / 或 http(s):// 开头')
+    if (i.icon && /['"\\\n]/.test(i.icon)) throw badRequest('非法导航字段')
+  }
+  const body = items.map((i) => [
+    '  {',
+    `    label: '${i.label}',`,
+    `    path: '${i.path}',`,
+    `    cmd: '${i.cmd}',`,
+    `    arg: '${i.arg}',`,
+    ...(i.icon ? [`    icon: '${i.icon}',`] : []),
+    '  },',
+  ].join('\n')).join('\n')
+  writeFileSync(NAV_CONFIG, `// config/navigation.ts\nimport type { NavItem } from '~/types'\n\nexport const navigation: NavItem[] = [\n${body}\n]\n`)
+  scheduleRebuild()
+}
+
 // ---- 写后自动重建 ----
 // ponytail: 重建期间站点继续用旧构建服务，构建完成后进程退出由 systemd 拉起新构建；
 // 升级路径：需要零停机再做 .output 双目录切换
