@@ -14,6 +14,8 @@
 - **RSS 订阅**: 自动生成 feed.xml
 - **Sitemap**: 自动生成 sitemap.xml
 - **评论系统**: 集成 Giscus (基于 GitHub Discussions)
+- **管理认证**: 静态口令 + 限速 + 无状态令牌，零外部依赖
+- **全站编辑模式**: 登录后文章/关于页左写右预览分栏编辑，列表与归档就地增删改
 
 ## 技术栈
 
@@ -67,17 +69,27 @@ myblog/
 ├── content/
 │   ├── about.md         # 关于页面
 │   └── articles/        # 博客文章 (Markdown)
-├── deploy/              # Caddy 服务器部署配置
+├── deploy/              # Caddy / systemd / 部署文档
 ├── layouts/             # 页面布局
-├── pages/               # 页面路由
+├── pages/               # 页面路由 (含 login、articles/new)
 ├── public/              # 静态资源
-├── server/routes/       # 服务端路由 (RSS, Sitemap)
+├── scripts/             # 运维脚本 (生成口令哈希)
+├── server/
+│   ├── api/             # 认证与内容管理 API
+│   ├── routes/          # 服务端路由 (RSS, Sitemap, 便携令牌)
+│   └── utils/           # 服务端工具 (auth, content)
 └── types/               # TypeScript 类型定义
 ```
 
 ## 写作指南
 
 ### 创建新文章
+
+**方式一：Web 编辑（推荐）**
+
+登录 `/login` 后，在 `/articles` 页点击"新增文章"，左侧写 Markdown、右侧实时预览，保存后自动重建生效。文章列表、归档、关于页同样支持就地编辑。
+
+**方式二：本地文件**
 
 在 `content/articles/` 目录下创建 `.md` 文件：
 
@@ -174,20 +186,30 @@ NUXT_PUBLIC_GISCUS_REPO=username/repo
 NUXT_PUBLIC_GISCUS_REPO_ID=your-repo-id
 NUXT_PUBLIC_GISCUS_CATEGORY=Announcements
 NUXT_PUBLIC_GISCUS_CATEGORY_ID=your-category-id
+
+# 管理认证（服务端，勿提交真实值）
+# 生成口令哈希: node scripts/hash-passphrase.mjs
+AUTH_PASSPHRASE_HASH=scrypt:<salt>:<hash>
+# 令牌签名密钥: openssl rand -hex 32
+AUTH_SECRET=
 ```
+
+## 管理认证
+
+- 访问 `/login` 输入管理口令；5 次失败锁 1 小时，锁定返回通用错误
+- 登录成功后全站进入编辑模式（会话 cookie 30 天）
+- 便携令牌：`/?pt=<token>` 或 `/auth/portable?pt=<token>` 一次性换会话
+- 忘记口令：SSH 修改服务器上 `/etc/myblog.env` 的 `AUTH_PASSPHRASE_HASH` 后重启服务
+- 内容保存后自动 `nuxt build` 并由 systemd 拉起新版本（约 1-2 分钟生效）
 
 ## 部署
 
-### Vercel (推荐)
-
-项目已包含 `vercel.json` 配置，直接导入到 Vercel 即可。
-
 ### Caddy + GitHub Actions (推荐)
 
-项目集成了 CI/CD 流程，推送代码后自动部署：
+站点以 Nuxt Nitro node-server 运行，Caddy 反向代理（自动 HTTPS）。推送代码后自动部署：
 
 ```
-Git Push → CI 检查 → 静态构建 → Rsync 同步 → Caddy 服务
+Git Push → GitHub Actions → SSH 服务器 → git pull + npm ci + nuxt build → systemctl restart myblog
 ```
 
 #### 配置步骤
@@ -201,22 +223,18 @@ Git Push → CI 检查 → 静态构建 → Rsync 同步 → Caddy 服务
 | `SERVER_HOST` | 服务器 IP 或域名 |
 | `SERVER_USER` | SSH 用户名 |
 | `SERVER_SSH_KEY` | SSH 私钥 |
-| `SITE_URL` | 网站完整 URL |
 
 **2. 服务器首次配置**
 
 ```bash
-# 安装 Caddy
-sudo apt install caddy  # Debian/Ubuntu
-
-# 创建网站目录
-sudo mkdir -p /var/www/myblog
-sudo chown deploy:deploy /var/www/myblog
-
-# 配置 Caddy (修改域名)
-sudo cp deploy/Caddyfile /etc/caddy/Caddyfile
-sudo vim /etc/caddy/Caddyfile
-sudo systemctl reload caddy
+# 安装 Caddy 和 Node >= 20，克隆仓库到 /var/www/myblog
+sudo cp deploy/Caddyfile /etc/caddy/Caddyfile   # 修改域名
+sudo cp deploy/myblog.service /etc/systemd/system/
+sudo tee /etc/myblog.env <<EOF                  # 认证配置
+AUTH_SECRET=$(openssl rand -hex 32)
+AUTH_PASSPHRASE_HASH=$(node scripts/hash-passphrase.mjs)
+EOF
+sudo systemctl enable --now myblog && sudo systemctl reload caddy
 ```
 
 **3. 日常发布**
@@ -228,14 +246,6 @@ git push  # 自动部署 ✨
 ```
 
 详细说明参见 [deploy/README.md](deploy/README.md)
-
-### 静态部署
-
-```bash
-npm run generate  # 生成静态文件
-```
-
-生成的文件在 `.output/public` 目录，可部署到任何静态托管服务。
 
 ## License
 
