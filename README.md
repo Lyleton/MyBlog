@@ -204,27 +204,19 @@ AUTH_SECRET=
 
 ## 部署
 
-### Caddy + GitHub Actions (推荐)
+### Caddy + SSH 部署 (推荐)
 
-站点以 Nuxt Nitro node-server 运行，Caddy 反向代理（自动 HTTPS）。推送代码后自动部署：
+站点以 Nuxt Nitro node-server 运行，Caddy 反向代理（自动 HTTPS）。代码变更后 SSH 到服务器更新：
 
 ```
-Git Push → GitHub Actions → SSH 服务器 → git pull + npm ci + nuxt build → systemctl restart myblog
+SSH 服务器 → git pull + npm ci + nuxt build → sudo systemctl restart myblog
 ```
+
+通过 Web 编辑模式修改的内容保存后自动重建，无需手动部署。
 
 #### 配置步骤
 
-**1. 配置 GitHub Secrets**
-
-在仓库 Settings → Secrets 中添加：
-
-| Secret | 说明 |
-|--------|------|
-| `SERVER_HOST` | 服务器 IP 或域名 |
-| `SERVER_USER` | SSH 用户名 |
-| `SERVER_SSH_KEY` | SSH 私钥 |
-
-**2. 服务器首次配置**
+**1. 服务器首次配置**
 
 ```bash
 # 安装 Caddy 和 Node >= 20，克隆仓库到 /var/www/myblog
@@ -237,12 +229,10 @@ EOF
 sudo systemctl enable --now myblog && sudo systemctl reload caddy
 ```
 
-**3. 日常发布**
+**2. 日常发布**
 
 ```bash
-git add content/articles/new-post.md
-git commit -m "feat: 新文章"
-git push  # 自动部署 ✨
+ssh deploy@server 'cd /var/www/myblog && git pull && npm ci && npm run build && sudo systemctl restart myblog'
 ```
 
 详细说明参见 [deploy/README.md](deploy/README.md)

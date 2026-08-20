@@ -3,8 +3,7 @@
 ## 架构
 
 ```
-Git Push ──▶ GitHub Actions ──▶ SSH 到服务器
-                                  └─ git pull + npm ci + nuxt build + systemctl restart myblog
+代码发布 ──▶ SSH 到服务器 ──▶ git pull + npm ci + nuxt build + systemctl restart myblog
 
 浏览器 ──▶ Caddy (HTTPS, 反向代理) ──▶ node .output/server/index.mjs (:3000)
                                           ├─ 页面渲染 (SSR)
@@ -17,7 +16,7 @@ Git Push ──▶ GitHub Actions ──▶ SSH 到服务器
 - **应用目录**: `/var/www/myblog`（完整 git 仓库，重建需要源码）
 - **内容编辑**: `/login` 登录后全站进入编辑模式（侧边栏、文章列表、归档、关于、文章详情均可就地编辑）；保存后自动 `nuxt build` 并由 systemd 拉起新版本（约 1-2 分钟生效，期间用旧版本服务）
 
-> 注意：通过管理面板改的内容只存在于服务器磁盘，不进 git。下次 CI 部署
+> 注意：通过管理面板改的内容只存在于服务器磁盘，不进 git。下次手动部署
 > （`git reset --hard origin/main`）会覆盖。重要内容请同时提交到仓库。
 
 ## 首次配置
@@ -67,9 +66,11 @@ sudo caddy validate --config /etc/caddy/Caddyfile
 sudo systemctl reload caddy
 ```
 
-### 4. GitHub Secrets
+### 4. 日常发布
 
-Settings → Secrets → Actions：`SERVER_HOST`、`SERVER_USER`（deploy）、`SERVER_SSH_KEY`。
+```bash
+ssh deploy@server 'cd /var/www/myblog && git pull && npm ci && npm run build && sudo systemctl restart myblog'
+```
 
 ## 常用命令
 

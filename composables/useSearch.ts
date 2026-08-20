@@ -53,12 +53,10 @@ export const useSearch = () => {
       { name: '_rawBody', weight: 0.1 },
     ],
     threshold: 0.4, // 0 = exact match, 1 = match anything
-    distance: 100,
     minMatchCharLength: 2,
     includeScore: true,
     includeMatches: true,
     ignoreLocation: true,
-    useExtendedSearch: true,
   }
 
   // Extract plain text from markdown body
@@ -268,7 +266,6 @@ export const useSearch = () => {
     navigateUp,
     navigateDown,
     selectCurrent,
-    addToHistory,
     clearHistory,
     removeFromHistory,
     useHistoryItem,

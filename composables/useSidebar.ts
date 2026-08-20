@@ -13,16 +13,6 @@ export const useSidebar = () => {
     isCollapsed.value = !isCollapsed.value
   }
 
-  // 展开侧边栏
-  const expand = () => {
-    isCollapsed.value = false
-  }
-
-  // 收缩侧边栏
-  const collapse = () => {
-    isCollapsed.value = true
-  }
-
   // 侧边栏宽度（计算属性）
   const sidebarWidth = computed(() => {
     return isCollapsed.value ? '72px' : '280px'
@@ -54,7 +44,5 @@ export const useSidebar = () => {
     isCollapsed: readonly(isCollapsed),
     sidebarWidth,
     toggle,
-    expand,
-    collapse,
   }
 }

@@ -67,15 +67,6 @@ const handleKeydown = (e: KeyboardEvent) => {
   }
 }
 
-// Format date
-const formatDate = (dateStr: string) => {
-  return new Date(dateStr).toLocaleDateString('zh-CN', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  })
-}
-
 // Handle result click
 const handleResultClick = (result: SearchResult) => {
   router.push(result.item._path!)
@@ -104,6 +95,11 @@ const getMatchSource = (result: SearchResult): string | null => {
 
   return sources.length > 0 ? sources[0] : null
 }
+
+const displayResults = computed(() => props.results.map(result => ({
+  ...result,
+  source: getMatchSource(result),
+})))
 
 // Get relevance indicator based on score
 const getRelevanceClass = (score: number): string => {
@@ -197,7 +193,7 @@ onMounted(() => {
             <!-- Results list -->
             <div v-else-if="results.length" class="results-list">
               <button
-                v-for="(result, index) in results"
+                v-for="(result, index) in displayResults"
                 :key="result.item._id"
                 class="result-item"
                 :class="{ selected: index === selectedIndex }"
@@ -210,10 +206,10 @@ onMounted(() => {
                     v-html="getHighlightedTitle(result)"
                   />
                   <span
-                    v-if="getMatchSource(result)"
+                    v-if="result.source"
                     class="result-source"
                   >
-                    {{ getMatchSource(result) }}
+                    {{ result.source }}
                   </span>
                 </div>
                 <div class="result-meta">
@@ -230,7 +226,7 @@ onMounted(() => {
                       #{{ tag }}
                     </span>
                   </span>
-                  <span class="result-date">{{ formatDate(result.item.date) }}</span>
+                  <span class="result-date">{{ formatDate(result.item.date, { year: 'numeric', month: 'short', day: 'numeric' }) }}</span>
                   <span
                     class="result-relevance"
                     :class="getRelevanceClass(result.score)"
