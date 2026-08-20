@@ -5,12 +5,47 @@ const route = useRoute()
 const slug = route.params.slug as string
 
 const { getArticleBySlug, getAdjacentArticles } = useArticles()
+const { authed } = useAuth()
 
 // 获取文章内容
-const { data: article, error } = await useAsyncData(
+const { data: article, error, refresh } = await useAsyncData(
   `article-${slug}`,
   () => getArticleBySlug(slug),
 )
+
+// 编辑模式
+const editing = ref(false)
+const editContent = ref('')
+const message = ref('')
+
+async function startEdit() {
+  const res = await $fetch<{ content: string }>('/api/admin/articles', { query: { path: `articles/${slug}.md` } })
+  editContent.value = res.content
+  editing.value = true
+  message.value = ''
+}
+
+async function saveEdit() {
+  try {
+    await $fetch('/api/admin/articles', { method: 'POST', body: { path: `articles/${slug}.md`, content: editContent.value } })
+    editing.value = false
+    message.value = '已保存，正在重建…'
+    await refresh()
+  } catch {
+    message.value = '保存失败'
+  }
+}
+
+async function removeArticle() {
+  if (!confirm(`删除文章 ${slug}？`)) return
+  await $fetch('/api/admin/articles', { method: 'DELETE', query: { path: `articles/${slug}.md` } })
+  navigateTo('/articles')
+}
+
+// ?edit=1 直达编辑模式（从列表卡片跳转）
+watch(authed, (v) => {
+  if (v && route.query.edit === '1' && !editing.value) startEdit()
+}, { immediate: true })
 
 // 获取相邻文章
 const { data: adjacent } = await useAsyncData(
@@ -25,16 +60,6 @@ if (error.value || !article.value) {
     statusMessage: 'Article Not Found',
   })
 }
-
-// 格式化日期
-const formattedDate = computed(() => {
-  if (!article.value?.date) return ''
-  return new Date(article.value.date).toLocaleDateString('zh-CN', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  })
-})
 
 // 获取 TOC
 const toc = computed(() => {
@@ -55,15 +80,30 @@ useHead({
 </script>
 
 <template>
-  <div class="article-page">
-    <article class="article">
+  <div class="article-page" :class="{ editing }">
+    <!-- 编辑模式：左编辑右预览 -->
+    <template v-if="editing">
+      <div class="edit-toolbar">
+        <span class="edit-path">content/articles/{{ slug }}.md</span>
+        <span v-if="message" class="edit-message">{{ message }}</span>
+        <button class="edit-btn primary" @click="saveEdit">保存</button>
+        <button class="edit-btn" @click="editing = false">取消</button>
+      </div>
+      <ArticleEditor v-model="editContent" />
+    </template>
+
+    <article v-else class="article">
       <!-- 文章头部 -->
       <header class="article-header">
         <div class="article-meta-top">
           <NuxtLink :to="`/articles?category=${article?.category}`" class="article-category">
             {{ article?.category }}
           </NuxtLink>
-          <span class="article-date">{{ formattedDate }}</span>
+          <span class="article-date">{{ formatDate(article.date, { year: 'numeric', month: 'long', day: 'numeric' }) }}</span>
+          <template v-if="authed">
+            <button class="edit-btn" @click="startEdit">✎ 编辑</button>
+            <button class="edit-btn danger" @click="removeArticle">✕ 删除</button>
+          </template>
         </div>
 
         <h1 class="article-title">{{ article?.title }}</h1>
@@ -129,6 +169,60 @@ useHead({
 .article-page {
   max-width: 800px;
   margin: 0 auto;
+}
+
+.article-page.editing {
+  max-width: 1400px;
+}
+
+.edit-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.edit-path {
+  flex: 1;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}
+
+.edit-message {
+  font-size: 0.8125rem;
+  color: var(--primary);
+}
+
+.edit-btn {
+  padding: 4px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background-color: var(--bg-secondary);
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.edit-btn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.edit-btn.primary {
+  background-color: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+
+.edit-btn.primary:hover {
+  opacity: 0.9;
+}
+
+.edit-btn.danger:hover {
+  border-color: #e06c75;
+  color: #e06c75;
 }
 
 .article-header {

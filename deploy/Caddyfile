@@ -1,21 +1,15 @@
 # ============================================
-# Caddy 配置文件
+# Caddy 配置文件（Nitro 服务端反向代理版）
 # 将此文件放置到 /etc/caddy/Caddyfile
 # ============================================
 
 # 替换为你的域名
 lyleton.fun {
-    # 网站根目录
-    root * /var/www/myblog
-
     # 启用 Gzip 压缩
     encode gzip
 
-    # 静态文件服务
-    file_server
-
-    # SPA 路由回退
-    try_files {path} {path}.html {path}/ /index.html
+    # 反向代理到 Nuxt/Nitro 服务
+    reverse_proxy 127.0.0.1:3000
 
     # 安全头
     header {

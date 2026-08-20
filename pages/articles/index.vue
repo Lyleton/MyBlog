@@ -5,6 +5,9 @@ const route = useRoute()
 const router = useRouter()
 
 const { getArticlesPaginated, getAllCategories, getArticlesByCategory } = useArticles()
+const { authed } = useAuth()
+
+const goNewArticle = () => navigateTo('/articles/new')
 
 // 获取当前页码和分类
 const currentPage = computed(() => {
@@ -89,6 +92,14 @@ useHead({
       { label: 'page', value: `${currentPage}/${data?.pagination.totalPages || 1}` },
     ]"
   >
+    <!-- 编辑模式：新增文章 -->
+    <div v-if="authed" class="admin-bar">
+      <button class="admin-btn" @click="goNewArticle">
+        <Icon name="ph:file-plus" size="16" />
+        新增文章
+      </button>
+    </div>
+
     <!-- 分类筛选 -->
     <FilterBar
       v-if="categories?.length"
@@ -139,6 +150,31 @@ useHead({
 </template>
 
 <style scoped>
+.admin-bar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 12px;
+}
+
+.admin-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border: 1px dashed var(--primary);
+  border-radius: 6px;
+  background-color: var(--bg-secondary);
+  color: var(--primary);
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.admin-btn:hover {
+  background-color: var(--primary);
+  color: #fff;
+}
+
 .loading {
   display: flex;
   flex-direction: column;

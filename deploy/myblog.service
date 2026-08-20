@@ -1,0 +1,22 @@
+# /etc/systemd/system/myblog.service
+# 认证口令哈希与密钥放在 /etc/myblog.env（chmod 600，属主 deploy）:
+#   AUTH_SECRET=<随机长字符串，如 openssl rand -hex 32>
+#   AUTH_PASSPHRASE_HASH=<node scripts/hash-passphrase.mjs 的输出>
+
+[Unit]
+Description=MyBlog (Nuxt Nitro)
+After=network.target
+
+[Service]
+Type=simple
+User=deploy
+WorkingDirectory=/var/www/myblog
+ExecStart=/usr/bin/node .output/server/index.mjs
+Restart=always
+RestartSec=2
+Environment=NODE_ENV=production
+Environment=PORT=3000
+EnvironmentFile=/etc/myblog.env
+
+[Install]
+WantedBy=multi-user.target

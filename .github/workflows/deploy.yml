@@ -1,6 +1,8 @@
 # ============================================
-# Deploy: 构建静态文件并部署到 Caddy 服务器
+# Deploy: 服务器拉取代码、构建并重启 Nitro 服务
 # 触发: main 分支 push 或手动触发
+# 前提: 服务器 /var/www/myblog 是本仓库的 git 克隆（属主 deploy），
+#       已安装 Node >= 20，且 deploy 用户可免密 `sudo systemctl restart myblog`
 # ============================================
 
 name: Deploy
@@ -8,34 +10,13 @@ name: Deploy
 on:
   push:
     branches: [main]
-    paths-ignore:
-      - '**.md'
-      - '.vscode/**'
-  workflow_dispatch:
+    workflow_dispatch:
 
 jobs:
-  build-and-deploy:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Install dependencies
-        run: |
-          rm -f package-lock.json
-          npm install
-
-      - name: Generate static files
-        run: npm run generate
-        env:
-          NUXT_PUBLIC_SITE_URL: ${{ secrets.SITE_URL }}
-
       - name: Setup SSH key
         run: |
           mkdir -p ~/.ssh
@@ -43,22 +24,8 @@ jobs:
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
 
-      - name: Deploy to server
-        run: |
-          # 打包压缩（速度提升 10x+）
-          cd .output/public && tar -czf ../../deploy.tar.gz . && cd ../..
-
-          # 上传压缩包
-          scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
-            deploy.tar.gz ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/tmp/
-
-          # 远程解压并部署
-          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
-            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
-            "rm -rf /var/www/myblog/* && tar -xzf /tmp/deploy.tar.gz -C /var/www/myblog && rm /tmp/deploy.tar.gz"
-
-      - name: Deployment notification
+      - name: Pull, build and restart on server
         run: |
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
             ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
-            "echo 'Deployment completed at $(date)'"
+            "cd /var/www/myblog && git fetch origin && git reset --hard origin/main && npm ci && npm run build && sudo systemctl restart myblog"

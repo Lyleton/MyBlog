@@ -1,6 +1,9 @@
 <script setup lang="ts">
 const { toggle } = useMobileMenu()
 const { isCollapsed, sidebarWidth } = useSidebar()
+const { check: checkAuth } = useAuth()
+
+onMounted(checkAuth)
 const {
   query,
   results,

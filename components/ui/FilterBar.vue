@@ -16,6 +16,10 @@ const emit = defineEmits<{
   'update:modelValue': [value: string]
 }>()
 
+const { authed } = useAuth()
+const { add: addCategory, rename: renameCategory, remove: removeCategory } = useCategoryAdmin()
+const newCategory = () => addCategory(prompt('新栏目名'))
+
 const selectCategory = (category: string) => {
   emit('update:modelValue', category === props.modelValue ? '' : category)
 }
@@ -48,6 +52,15 @@ const selectCategory = (category: string) => {
       >
         <span class="tag-prefix">-</span>
         <span class="tag-name">{{ category }}</span>
+        <template v-if="authed">
+          <span class="tag-action" title="重命名" @click.stop="renameCategory(category)">✎</span>
+          <span class="tag-action danger" title="删除" @click.stop="removeCategory(category)">✕</span>
+        </template>
+      </button>
+
+      <button v-if="authed" class="filter-tag add-tag" title="新增栏目" @click="newCategory">
+        <span class="tag-prefix">+</span>
+        <span class="tag-name">栏目</span>
       </button>
     </div>
   </div>
@@ -116,6 +129,25 @@ const selectCategory = (category: string) => {
 
 .tag-prefix {
   color: var(--text-muted);
+}
+
+.tag-action {
+  margin-left: 2px;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
+.tag-action:hover {
+  color: var(--primary);
+}
+
+.tag-action.danger:hover {
+  color: #e06c75;
+}
+
+.add-tag {
+  border-style: dashed;
+  border-color: var(--border-color);
 }
 
 .filter-tag.active .tag-prefix {

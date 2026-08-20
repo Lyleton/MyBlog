@@ -5,6 +5,7 @@ import { navigation } from '~/config/navigation'
 const route = useRoute()
 const { isOpen, close } = useMobileMenu()
 const { isCollapsed, toggle: toggleSidebar } = useSidebar()
+const { authed, logout } = useAuth()
 
 const emit = defineEmits<{
   'open-search': []
@@ -102,6 +103,15 @@ const handleSearchClick = () => {
     <!-- 主题切换 -->
     <div class="sidebar-theme">
       <ThemeToggle />
+      <button
+        v-if="authed"
+        class="logout-terminal"
+        :title="isCollapsed ? '退出登录' : undefined"
+        @click="logout"
+      >
+        <Icon name="ph:sign-out" :size="isCollapsed ? 20 : 16" />
+        <span v-if="!isCollapsed">exit 0</span>
+      </button>
     </div>
 
     <!-- 折叠切换按钮 -->
@@ -384,6 +394,30 @@ const handleSearchClick = () => {
 .sidebar-theme {
   margin-top: auto;
   margin-bottom: 12px;
+}
+
+/* 退出登录（与搜索入口同款终端风格） */
+.logout-terminal {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  margin-top: 8px;
+  padding: 10px 12px;
+  background-color: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+}
+
+.logout-terminal:hover {
+  border-color: var(--primary);
+  color: var(--primary);
 }
 
 /* 折叠切换按钮 */

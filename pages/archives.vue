@@ -3,6 +3,14 @@ import { siteConfig } from '~/config/site'
 import type { Article } from '~/types'
 
 const { getAllArticles } = useArticles()
+const { authed } = useAuth()
+
+async function removeArticle(article: Article) {
+  if (!confirm(`删除文章「${article.title}」？`)) return
+  const slug = article._path?.split('/').pop()
+  await $fetch('/api/admin/articles', { method: 'DELETE', query: { path: `articles/${slug}.md` } })
+  window.location.reload()
+}
 
 // 获取所有文章
 const { data: articles } = await useAsyncData(
@@ -102,6 +110,10 @@ useHead({
                   <span class="article-title">{{ article.title }}</span>
                 </NuxtLink>
                 <span class="article-category">{{ article.category }}</span>
+                <template v-if="authed">
+                  <NuxtLink :to="`${article._path}?edit=1`" class="article-action" title="编辑">✎</NuxtLink>
+                  <button class="article-action danger" title="删除" @click="removeArticle(article)">✕</button>
+                </template>
               </li>
             </ul>
           </div>
@@ -229,6 +241,24 @@ useHead({
   border-radius: 4px;
   font-size: 0.75rem;
   color: var(--text-secondary);
+}
+
+.article-action {
+  flex-shrink: 0;
+  border: none;
+  background: none;
+  padding: 0 2px;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.article-action:hover {
+  color: var(--primary);
+}
+
+.article-action.danger:hover {
+  color: #e06c75;
 }
 
 @media (max-width: 600px) {

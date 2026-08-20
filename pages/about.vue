@@ -1,11 +1,36 @@
 <script setup lang="ts">
 import { siteConfig } from '~/config/site'
 
+const { authed } = useAuth()
+
 // 获取关于页面内容
-const { data: about } = await useAsyncData(
+const { data: about, refresh } = await useAsyncData(
   'about-page',
   () => queryContent('about').findOne(),
 )
+
+// 编辑模式
+const editing = ref(false)
+const editContent = ref('')
+const message = ref('')
+
+async function startEdit() {
+  const res = await $fetch<{ content: string }>('/api/admin/articles', { query: { path: 'about.md' } })
+  editContent.value = res.content
+  editing.value = true
+  message.value = ''
+}
+
+async function saveEdit() {
+  try {
+    await $fetch('/api/admin/articles', { method: 'POST', body: { path: 'about.md', content: editContent.value } })
+    editing.value = false
+    message.value = '已保存，正在重建…'
+    await refresh()
+  } catch {
+    message.value = '保存失败'
+  }
+}
 
 // SEO
 useHead({
@@ -58,7 +83,17 @@ useHead({
       </TerminalWindow>
 
       <!-- 关于内容 -->
-      <div v-if="about" class="about-content prose">
+      <div v-if="editing" class="about-edit">
+        <div class="edit-toolbar">
+          <span class="edit-path">content/about.md</span>
+          <span v-if="message" class="edit-message">{{ message }}</span>
+          <button class="edit-btn primary" @click="saveEdit">保存</button>
+          <button class="edit-btn" @click="editing = false">取消</button>
+        </div>
+        <ArticleEditor v-model="editContent" />
+      </div>
+      <div v-else-if="about" class="about-content prose">
+        <button v-if="authed" class="edit-btn about-edit-btn" @click="startEdit">✎ 编辑此页</button>
         <ContentRenderer :value="about" />
       </div>
     </div>
@@ -143,6 +178,59 @@ useHead({
 
 .about-content {
   margin-top: 32px;
+}
+
+.about-edit {
+  margin-top: 32px;
+}
+
+.about-edit-btn {
+  margin-bottom: 16px;
+}
+
+.edit-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.edit-path {
+  flex: 1;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}
+
+.edit-message {
+  font-size: 0.8125rem;
+  color: var(--primary);
+}
+
+.edit-btn {
+  padding: 4px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background-color: var(--bg-secondary);
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.edit-btn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.edit-btn.primary {
+  background-color: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+
+.edit-btn.primary:hover {
+  opacity: 0.9;
 }
 
 @media (max-width: 600px) {
