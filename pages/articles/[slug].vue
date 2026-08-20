@@ -80,8 +80,8 @@ useHead({
 </script>
 
 <template>
-  <div class="article-page" :class="{ editing }">
-    <!-- 编辑模式：左编辑右预览 -->
+  <div class="article-page">
+    <!-- 编辑模式 -->
     <template v-if="editing">
       <div class="edit-toolbar">
         <span class="edit-path">content/articles/{{ slug }}.md</span>
@@ -169,10 +169,6 @@ useHead({
 .article-page {
   max-width: 800px;
   margin: 0 auto;
-}
-
-.article-page.editing {
-  max-width: 1400px;
 }
 
 .edit-toolbar {

@@ -8,37 +8,43 @@ const emit = defineEmits<{
   save: []
 }>()
 
+const mode = ref<'edit' | 'preview'>('edit')
 const doc = ref<any>(null)
-let timer: ReturnType<typeof setTimeout> | undefined
+const loading = ref(false)
 
-watch(
-  () => props.modelValue,
-  (content) => {
-    clearTimeout(timer)
-    timer = setTimeout(async () => {
-      try {
-        doc.value = (await $fetch('/api/admin/preview', { method: 'POST', body: { content } })).doc
-      } catch { /* 保留上一次预览 */ }
-    }, 400)
-  },
-  { immediate: true },
-)
+async function togglePreview() {
+  if (mode.value === 'edit') {
+    loading.value = true
+    try {
+      doc.value = (await $fetch('/api/admin/preview', { method: 'POST', body: { content: props.modelValue } })).doc
+      mode.value = 'preview'
+    } catch { /* 保持编辑模式 */ } finally {
+      loading.value = false
+    }
+  } else {
+    mode.value = 'edit'
+  }
+}
 </script>
 
 <template>
-  <div class="editor-split">
-    <div class="editor-pane">
-      <div class="pane-header">编辑 (Markdown)</div>
+  <div class="editor-wrap">
+    <div class="editor-toolbar">
+      <span class="editor-mode">{{ mode === 'edit' ? '编辑 (Markdown)' : '预览' }}</span>
+      <button class="preview-toggle" :disabled="loading" @click="togglePreview">
+        <template v-if="mode === 'edit'">{{ loading ? '渲染中…' : '预览' }}</template>
+        <template v-else>返回编辑</template>
+      </button>
+    </div>
+    <div class="editor-body">
       <textarea
+        v-show="mode === 'edit'"
         class="editor-textarea"
         :value="modelValue"
         spellcheck="false"
         @input="emit('update:modelValue', ($event.target as HTMLTextAreaElement).value)"
       />
-    </div>
-    <div class="preview-pane">
-      <div class="pane-header">预览</div>
-      <div class="preview-body prose">
+      <div v-show="mode === 'preview'" class="preview-body prose">
         <ContentRenderer v-if="doc" :value="doc" />
         <p v-else class="preview-empty">预览加载中…</p>
       </div>
@@ -47,30 +53,55 @@ watch(
 </template>
 
 <style scoped>
-.editor-split {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  height: calc(100vh - 220px);
-  min-height: 400px;
-}
-
-.editor-pane,
-.preview-pane {
+.editor-wrap {
   display: flex;
   flex-direction: column;
   border: 1px solid var(--border-color);
   border-radius: 8px;
   background-color: var(--bg-secondary);
   overflow: hidden;
+  height: calc(100vh - 220px);
+  min-height: 400px;
 }
 
-.pane-header {
+.editor-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   padding: 8px 12px;
   border-bottom: 1px solid var(--border-color);
   font-family: var(--font-mono);
   font-size: 0.75rem;
   color: var(--text-muted);
+}
+
+.preview-toggle {
+  padding: 3px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background-color: var(--bg-tertiary);
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.preview-toggle:hover:not(:disabled) {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.preview-toggle:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.editor-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .editor-textarea {
@@ -91,8 +122,9 @@ watch(
 
 .preview-body {
   flex: 1;
-  padding: 12px 16px;
+  padding: 12px 20px;
   overflow-y: auto;
+  max-width: none;
 }
 
 .preview-empty {
@@ -100,8 +132,7 @@ watch(
 }
 
 @media (max-width: 767px) {
-  .editor-split {
-    grid-template-columns: 1fr;
+  .editor-wrap {
     height: auto;
   }
 
