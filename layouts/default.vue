@@ -34,7 +34,9 @@ const {
     </header>
 
     <main class="main-content" :class="{ 'sidebar-collapsed': isCollapsed }" :style="{ marginLeft: sidebarWidth }">
-      <slot />
+      <div class="page-body">
+        <slot />
+      </div>
       <Footer />
     </main>
 
@@ -108,10 +110,16 @@ const {
 
 .main-content {
   flex: 1;
+  display: flex;
+  flex-direction: column;
   margin-left: var(--sidebar-width);
   padding: 48px 64px;
   background-color: var(--bg-primary);
   transition: margin-left 0.3s ease;
+}
+
+.page-body {
+  flex: 1;
 }
 
 /* Tablet layout (768px - 1024px) */

@@ -7,40 +7,47 @@ const currentYear = new Date().getFullYear()
 <template>
   <footer class="footer">
     <div class="footer-terminal">
-      <div class="footer-line">
-        <span class="footer-prompt">$</span>
-        <span class="footer-cmd">whoami</span>
-      </div>
-      <div class="footer-output">
-        {{ siteConfig.description }}
+      <div class="footer-grid">
+        <div class="footer-col">
+          <div class="footer-line">
+            <span class="footer-prompt">$</span>
+            <span class="footer-cmd">whoami</span>
+          </div>
+          <div class="footer-output">
+            {{ siteConfig.description }}
+          </div>
+        </div>
+
+        <div class="footer-col">
+          <div class="footer-line">
+            <span class="footer-prompt">$</span>
+            <span class="footer-cmd">ls</span>
+            <span class="footer-arg">./links/</span>
+          </div>
+          <div class="footer-links">
+            <a
+              v-for="social in siteConfig.social"
+              :key="social.name"
+              :href="social.url"
+              class="footer-link"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {{ social.name }}
+            </a>
+          </div>
+        </div>
       </div>
 
-      <div class="footer-line">
-        <span class="footer-prompt">$</span>
-        <span class="footer-cmd">ls</span>
-        <span class="footer-arg">./links/</span>
-      </div>
-      <div class="footer-links">
-        <a
-          v-for="social in siteConfig.social"
-          :key="social.name"
-          :href="social.url"
-          class="footer-link"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          {{ social.name }}
-        </a>
-      </div>
-
-      <div class="footer-copyright">
-        // Copyright &copy; {{ currentYear }} {{ siteConfig.name }}. Powered by Nuxt 3.
-      </div>
-
-      <div class="footer-icp">
-        <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer">
-          湘ICP备2025103214号-1
-        </a>
+      <div class="footer-bottom">
+        <span class="footer-copyright">
+          // Copyright &copy; {{ currentYear }} {{ siteConfig.name }}. Powered by Nuxt 3.
+        </span>
+        <span class="footer-icp">
+          <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer">
+            湘ICP备2025103214号-1
+          </a>
+        </span>
       </div>
     </div>
   </footer>
@@ -48,9 +55,9 @@ const currentYear = new Date().getFullYear()
 
 <style scoped>
 .footer {
-  padding: 48px 0;
+  padding: 32px 0;
   border-top: 1px solid var(--border-color);
-  margin-top: 64px;
+  margin-top: 48px;
 }
 
 .footer-terminal {
@@ -58,10 +65,21 @@ const currentYear = new Date().getFullYear()
   font-size: 0.875rem;
 }
 
+.footer-grid {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 24px;
+  margin-bottom: 20px;
+}
+
+.footer-col {
+  min-width: 0;
+}
+
 .footer-line {
   display: flex;
   gap: 8px;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .footer-prompt {
@@ -78,8 +96,8 @@ const currentYear = new Date().getFullYear()
 
 .footer-output {
   color: var(--text-secondary);
-  margin-bottom: 24px;
   padding-left: 16px;
+  max-width: 480px;
 }
 
 .footer-links {
@@ -87,7 +105,6 @@ const currentYear = new Date().getFullYear()
   flex-wrap: wrap;
   gap: 16px;
   padding-left: 16px;
-  margin-bottom: 32px;
 }
 
 .footer-link {
@@ -99,14 +116,23 @@ const currentYear = new Date().getFullYear()
   color: var(--primary-dark);
 }
 
+.footer-bottom {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--border-color);
+}
+
 .footer-copyright {
   color: var(--text-muted);
   font-size: 0.8125rem;
 }
 
 .footer-icp {
-  margin-top: 12px;
   font-size: 0.75rem;
+  display: flex;
+  align-items: center;
 }
 
 .footer-icp a {
@@ -116,5 +142,11 @@ const currentYear = new Date().getFullYear()
 
 .footer-icp a:hover {
   color: var(--primary);
+}
+
+@media (max-width: 640px) {
+  .footer-grid {
+    grid-template-columns: 1fr;
+  }
 }
 </style>
